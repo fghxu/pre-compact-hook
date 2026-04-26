@@ -224,8 +224,16 @@ try {
 }
 
 # Extract workspace root
-$workspaceRoot = $payload.workspaceRoot
-if ([string]::IsNullOrEmpty($workspaceRoot) -or -not (Test-Path $workspaceRoot)) {
+# Copilot CLI / VS Code Copilot sends `cwd` in the real payload (per VS Code
+# hooks spec: https://code.visualstudio.com/docs/copilot/customization/hooks ).
+# We keep `workspaceRoot` as a backward-compatible alias so older test payloads
+# and manual invocations still work.
+$workspaceRoot = $null
+if ($payload.cwd -and (Test-Path $payload.cwd)) {
+    $workspaceRoot = $payload.cwd
+} elseif ($payload.workspaceRoot -and (Test-Path $payload.workspaceRoot)) {
+    $workspaceRoot = $payload.workspaceRoot
+} else {
     # Fallback: use current directory
     $workspaceRoot = $PWD.Path
 }
@@ -247,8 +255,17 @@ if (-not (Test-Path $githubDir)) {
     New-Item -ItemType Directory -Path $githubDir -Force | Out-Null
 }
 
-# Extract trigger type
-$trigger = if ($payload.trigger) { $payload.trigger } else { "unknown" }
+# Extract trigger type.
+# `trigger` is our own test convention ("auto"/"manual"); Copilot's real payload
+# uses `hookEventName` (e.g. "PreCompact") per the VS Code hooks spec. Honour
+# either, defaulting to "unknown".
+$trigger = if ($payload.trigger) {
+    $payload.trigger
+} elseif ($payload.hookEventName) {
+    $payload.hookEventName
+} else {
+    "unknown"
+}
 
 # Extract context summary metrics
 $toolCallsCount = $null

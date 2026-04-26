@@ -41,6 +41,40 @@ project-root/
 2. Copy `.github/hooks/pre-compact-copilot.json` to your project's `.github/hooks/` directory
 3. Create the `.github/hooks/` directory if it doesn't exist
 
+### Runtime requirements
+
+- **GitHub Copilot CLI ≥ 1.0.5** — the `PreCompact` hook event was introduced
+  in release 1.0.5. Check with `/version` inside `copilot`. Older versions
+  silently ignore the event.
+- **VS Code Copilot Chat** — agent hooks are currently **Preview** in VS Code;
+  you may need a recent/Insiders build and your organization policy must allow
+  hooks. See the
+  [VS Code hooks docs](https://code.visualstudio.com/docs/copilot/customization/hooks).
+- **PowerShell ≥ 7** (`pwsh`) on `PATH`.
+
+### Verifying the hook is loaded
+
+- **Copilot CLI:** run `/env` — the loaded hooks are listed there.
+- **VS Code Copilot Chat:** open the **Output** panel and select the
+  *"GitHub Copilot Chat Hooks"* channel. You should see a log line referencing
+  `.github/hooks/pre-compact-copilot.json` when the workspace loads.
+- **Smoke test** (no IDE required):
+
+  ```powershell
+  $payload = @{
+    timestamp       = (Get-Date -Format o)
+    cwd             = (Resolve-Path .).Path
+    sessionId       = "smoke-test"
+    hookEventName   = "PreCompact"
+    transcript_path = ""
+  } | ConvertTo-Json -Compress
+
+  $payload | pwsh -NoProfile -NonInteractive -File .\pre-compact-copilot.ps1
+  ```
+
+  Expected: exit 0 and new entries appended to `.transcripts\transcripts.md`,
+  `.transcripts\transcripts.jsonl`, and `.github\session_context.md`.
+
 ## Configuration
 
 The hook reads settings from `.github/hooks/pre-compact-copilot.config.json` (optional):
@@ -77,17 +111,33 @@ $payload | pwsh -File pre-compact-copilot.ps1
 
 ### Input Payload Schema
 
+Real Copilot / VS Code `PreCompact` payload (per the
+[VS Code hooks spec](https://code.visualstudio.com/docs/copilot/customization/hooks)):
+
 ```json
 {
-  "workspaceRoot": "string (absolute path to project root)",
-  "transcript": "array (raw transcript content)",
-  "transcript_path": "string (path to transcript file, if available)",
-  "logs": "array (debug log content, if available)",
-  "trigger": "auto | manual",
+  "timestamp": "ISO-8601 string",
+  "cwd": "absolute path to workspace root",
+  "sessionId": "string",
+  "hookEventName": "PreCompact",
+  "transcript_path": "absolute path to transcript JSON"
+}
+```
+
+The script also accepts these optional, backward-compatible fields that are
+used by the test harness and for manual invocation:
+
+```json
+{
+  "workspaceRoot": "alias for cwd (used by tests)",
+  "trigger":       "auto | manual (defaults to hookEventName when absent)",
+  "transcript":    "array of raw transcript events (used by tests)",
+  "logs":          "array of debug log lines",
+  "debugExport":   "opaque debug-export blob",
   "contextSummary": {
     "tool_calls_count": "number",
-    "token_usage": "number",
-    "duration_ms": "number"
+    "token_usage":      "number",
+    "duration_ms":      "number"
   }
 }
 ```

@@ -1,14 +1,12 @@
 {
-  "hooks": [
-    {
-      "id": "pre-compact-copilot",
-      "name": "PreCompact Context Saver",
-      "trigger": "PreCompact",
-      "command": "pwsh",
-      "args": ["-File", "${workspaceFolder}/pre-compact-copilot.ps1"],
-      "cwd": "${workspaceFolder}",
-      "enabled": true,
-      "timeout": 30000
-    }
-  ]
+  "hooks": {
+    "PreCompact": [
+      {
+        "type": "command",
+        "command": "pwsh -NoProfile -NonInteractive -File ./pre-compact-copilot.ps1",
+        "windows": "pwsh -NoProfile -NonInteractive -File .\\pre-compact-copilot.ps1",
+        "timeout": 30
+      }
+    ]
+  }
 }
