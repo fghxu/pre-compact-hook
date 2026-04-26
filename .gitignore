@@ -1,0 +1,26 @@
+# Git ignore for pre-compact-hook project
+
+# Git
+.git/
+.github/hooks/pre-compact-copilot.config.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Transcripts (runtime generated)
+.transcripts/
+.github/session_context.md
+
+# Temp
+*.tmp
+*.temp
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Pester test output
+*.testresults/

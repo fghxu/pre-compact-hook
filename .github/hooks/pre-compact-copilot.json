@@ -1,0 +1,14 @@
+{
+  "github.copilot.hooks": [
+    {
+      "id": "pre-compact-copilot",
+      "name": "PreCompact Context Saver",
+      "trigger": "PreCompact",
+      "command": "pwsh",
+      "args": ["-File", "pre-compact-copilot.ps1"],
+      "cwd": "${workspaceFolder}",
+      "enabled": true,
+      "timeout": 30000
+    }
+  ]
+}
